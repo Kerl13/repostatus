@@ -23,13 +23,23 @@ print_repo () {
   printf '\n'
 }
 
+finish () {
+  pad="==============================================================="
+  printf '%*.*s' 0 $(((60 - 8)/2)) "$pad"
+  printf '( %b%s%b )' "$SUCCESS_COLOR" "Done" "$WHITE"
+  printf '%*.*s' 0 $(((60 - 8)/2)) "$pad"
+  printf '\n'
+}
+
+
 check () {
   cd "$repo"
-  remote=$(git config --get branch.master.remote)
+  if ! remote=$(git config --get branch.master.remote); then
+      remote="origin"
+  fi
   status="$(git status --porcelain)"
   diff="$(git log "$remote"/master..master)"
-  if [ "_$status" = "_" ] && [ "_$diff" = "_" ]
-  then
+  if [ "_$status" = "_" ] && [ "_$diff" = "_" ]; then
     print_repo "$repo" "$SUCCESS_COLOR" Ok
   else
     print_repo "$repo" "$FAIL_COLOR" Failed
@@ -38,9 +48,10 @@ check () {
   cd "$HERE"
 }
 
-
 cd "$HERE"
 find . -path '*/*' -prune -type d | while read -r repo
 do
   check "$repo"
 done
+
+finish
