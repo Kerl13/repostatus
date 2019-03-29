@@ -9,71 +9,109 @@ set -euC
 
 HERE="$HOME/git"
 
-SUCCESS_COLOR="\\033[32m"
-FAIL_COLOR="\\033[31m"
-REPO_COLOR="\\033[34;1m"  # bold blue
-WHITE="\\033[0m"
+SUCCESS_COLOR='\033[32m'
+WARNING_COLOR='\033[33m'
+FAIL_COLOR='\033[31m'
+REPO_COLOR='\033[34;1m'  # bold blue
+MESSAGE_COLOR="$REPO_COLOR"
+WHITE='\033[0m'
 
 
 trim_prefix () {
   echo "${1#$HERE/}"
 }
 
+pad="====================================================================="
+
+
+print_message () {
+  printf '%*.*s' 0 $(((66 - ${#1} - 4)/2)) "$pad"
+  printf '( %b%s%b )' "$MESSAGE_COLOR" "$1" "$WHITE"
+  printf '%*.*s' 0 $(((66 - ${#1} - 4)/2)) "$pad"
+  printf '\n'
+}
+
+print_stats () {
+  printf '%*.*s' 0 $(((66 - ${#1} - ${#2} - ${#3} - 10)/2)) "$pad"
+  printf '( %b%s%b / %b%s%b / %b%s%b )' \
+    "$SUCCESS_COLOR" "$1" "$WHITE" \
+    "$WARNING_COLOR" "$2" "$WHITE" \
+    "$FAIL_COLOR" "$3" "$WHITE"
+  printf '%*.*s' 0 $(((66 - ${#1} - ${#2} - ${#3} - 10)/2)) "$pad"
+  printf '\n'
+}
 
 print_repo () {
-  pad="==============================================================="
+  # INPUT:
+  # $1 -- color
+  # $2 -- message
   reponame="$(trim_prefix "$(pwd)")"
   printf '==( %b%s%b )' "$REPO_COLOR" "$reponame" "$WHITE"
-  printf '%*.*s' 0 $((60 - ${#reponame} - 6 - ${#2} - 6)) "$pad"
+  printf '%*.*s' 0 $((66 - ${#reponame} - 6 - ${#2} - 6)) "$pad"
   printf '( %b%s%b )==' "$1" "$2" "$WHITE"
   printf '\n'
 }
 
-finish () {
-  pad="==============================================================="
-  printf '%*.*s' 0 $(((60 - 8)/2)) "$pad"
-  printf '( %b%s%b )' "$SUCCESS_COLOR" "Done" "$WHITE"
-  printf '%*.*s' 0 $(((60 - 8)/2)) "$pad"
-  printf '\n'
+get_current_branch () {
+  git branch | grep '^\* ' | sed 's/^\* //'
 }
 
+git_status () {
+  git status --porcelain
+}
 
-check () {
-  if ! remote=$(git config --get branch.master.remote); then
-      remote="origin"
-  fi
+get_merge_ref () {
+  branch="$(get_current_branch)"
+  (git config --get "branch.$branch.merge" \
+      | sed 's#^refs/heads/##') || true
+}
+
+get_remote () {
+  branch="$(get_current_branch)"
+  git config --get "branch.$branch.remote" || true
+}
+
+nb_ok=0
+nb_warn=0
+nb_err=0
+
+
+print_message "Repostatus"
+
+cd "$HERE"
+# [SC2044] For loop over find output are fragile
+for dirname in $(find . -type d -exec test -e '{}/.git' ';' -print -prune); do
+  before_check="$(pwd)"
+  cd "$dirname"
   status="$(git status --porcelain)"
-  diff="$(git log "$remote"/master..master)"
-  if [ "_$status" = "_" ] && [ "_$diff" = "_" ]; then
-    print_repo "$SUCCESS_COLOR" Ok
-  else
+  if [ "_$status" != "_" ]; then
+    # Repository not clean
+    nb_err=$((nb_err + 1))
     print_repo "$FAIL_COLOR" Failed
     git status
-  fi
-}
-
-plouf () {
-  before_plouf="$(pwd)"
-  cd "$1"
-  if [ -d .git ]; then
-    check
   else
-    if [ "$(pwd)" != "$HERE" ]; then
-      print_repo "$SUCCESS_COLOR" "↺"
+    # Look for a remote branch
+    branch="$(get_current_branch)"
+    remote="$(get_remote)"
+    merge_ref="$(get_merge_ref)"
+    if [ "_$remote" = "_" ] || [ "_$merge_ref" = "_" ]; then
+      # Found no remote branch
+      nb_warn=$((nb_warn + 1))
+      print_repo "$WARNING_COLOR" "No remote"
+    else
+      diff="$(git log "$remote/$merge_ref..$branch")"
+      if [ "_$diff" = "_" ]; then
+        nb_ok=$((nb_ok + 1))
+        print_repo "$SUCCESS_COLOR" Ok
+      else
+        nb_err=$((nb_err + 1))
+        print_repo "$FAIL_COLOR" Failed
+        git status
+      fi
     fi
-    find . -path '*/*' -prune -type d | while read -r repo
-    do
-      plouf "$repo"
-    done
   fi
-  cd "$before_plouf"
-}
+  cd "$before_check"
+done
 
-plouf "$HERE"
-
-#find . -path '*/*' -prune -type d | while read -r repo
-#do
-#  check "$repo"
-#done
-
-finish
+print_message "Done"
+print_stats "$nb_ok" "$nb_warn" "$nb_err"
