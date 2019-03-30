@@ -72,46 +72,47 @@ get_remote () {
   git config --get "branch.$branch.remote" || true
 }
 
-nb_ok=0
-nb_warn=0
-nb_err=0
-
-
 print_message "Repostatus"
 
 cd "$HERE"
 # [SC2044] For loop over find output are fragile
-for dirname in $(find . -type d -exec test -e '{}/.git' ';' -print -prune); do
-  before_check="$(pwd)"
-  cd "$dirname"
-  status="$(git status --porcelain)"
-  if [ "_$status" != "_" ]; then
-    # Repository not clean
-    nb_err=$((nb_err + 1))
-    print_repo "$FAIL_COLOR" Failed
-    git status
-  else
-    # Look for a remote branch
-    branch="$(get_current_branch)"
-    remote="$(get_remote)"
-    merge_ref="$(get_merge_ref)"
-    if [ "_$remote" = "_" ] || [ "_$merge_ref" = "_" ]; then
-      # Found no remote branch
-      nb_warn=$((nb_warn + 1))
-      print_repo "$WARNING_COLOR" "No remote"
+find . -type d -exec test -e '{}/.git' ';' -print -prune | {
+  nb_ok=0
+  nb_warn=0
+  nb_err=0
+
+  while read -r dirname; do
+    before_check="$(pwd)"
+    cd "$dirname"
+    status="$(git status --porcelain)"
+    if [ "_$status" != "_" ]; then
+      # Repository not clean
+      nb_err=$((nb_err + 1))
+      print_repo "$FAIL_COLOR" Failed
+      git status
     else
-      diff="$(git log "$remote/$merge_ref..$branch")"
-      if [ "_$diff" = "_" ]; then
-        nb_ok=$((nb_ok + 1))
-        print_repo "$SUCCESS_COLOR" Ok
+      # Look for a remote branch
+      branch="$(get_current_branch)"
+      remote="$(get_remote)"
+      merge_ref="$(get_merge_ref)"
+      if [ "_$remote" = "_" ] || [ "_$merge_ref" = "_" ]; then
+        # Found no remote branch
+        nb_warn=$((nb_warn + 1))
+        print_repo "$WARNING_COLOR" "No remote"
       else
-        nb_err=$((nb_err + 1))
-        print_repo "$FAIL_COLOR" Failed
-        git status
+        diff="$(git log "$remote/$merge_ref..$branch")"
+        if [ "_$diff" = "_" ]; then
+          nb_ok=$((nb_ok + 1))
+          print_repo "$SUCCESS_COLOR" Ok
+        else
+          nb_err=$((nb_err + 1))
+          print_repo "$FAIL_COLOR" Failed
+          git status
+        fi
       fi
     fi
-  fi
-  cd "$before_check"
-done
+    cd "$before_check"
+  done
 
-print_stats "$nb_ok" "$nb_warn" "$nb_err"
+  print_stats "$nb_ok" "$nb_warn" "$nb_err"
+}
