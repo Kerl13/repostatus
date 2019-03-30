@@ -32,12 +32,13 @@ print_message () {
 }
 
 print_stats () {
-  printf '%*.*s' 0 $(((66 - ${#1} - ${#2} - ${#3} - 10)/2)) "$pad"
-  printf '( %b%s%b / %b%s%b / %b%s%b )' \
+  printf '%*.*s' 0 $(((66 - ${#1} - ${#2} - ${#3} - 16)/2)) "$pad"
+  printf '( %bDone%b: %b%s%b / %b%s%b / %b%s%b )' \
+    "$MESSAGE_COLOR" "$WHITE" \
     "$SUCCESS_COLOR" "$1" "$WHITE" \
     "$WARNING_COLOR" "$2" "$WHITE" \
     "$FAIL_COLOR" "$3" "$WHITE"
-  printf '%*.*s' 0 $(((66 - ${#1} - ${#2} - ${#3} - 10)/2)) "$pad"
+  printf '%*.*s' 0 $(((66 - ${#1} - ${#2} - ${#3} - 16)/2)) "$pad"
   printf '\n'
 }
 
@@ -113,5 +114,4 @@ for dirname in $(find . -type d -exec test -e '{}/.git' ';' -print -prune); do
   cd "$before_check"
 done
 
-print_message "Done"
 print_stats "$nb_ok" "$nb_warn" "$nb_err"
