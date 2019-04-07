@@ -7,7 +7,11 @@
 set -euC
 
 
-HERE="$HOME/git"
+if [ "$#" = 0 ]; then
+  HERE="$HOME/git"
+else
+  HERE="$(realpath $1)"
+fi
 
 SUCCESS_COLOR='\033[32m'
 WARNING_COLOR='\033[33m'
