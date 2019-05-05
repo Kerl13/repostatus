@@ -79,7 +79,6 @@ get_remote () {
 print_message "Repostatus"
 
 cd "$HERE"
-# [SC2044] For loop over find output are fragile
 find . -type d -exec test -e '{}/.git' ';' -print -prune | {
   nb_ok=0
   nb_warn=0
