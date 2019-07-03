@@ -7,10 +7,24 @@
 set -euC
 
 
-if [ "$#" = 0 ]; then
-  HERE="$HOME/git"
-else
-  HERE="$(realpath $1)"
+HERE="$HOME/git"
+QUIET=0
+
+while getopts 'q' opt; do
+  case "$opt" in
+    q ) QUIET=1
+      ;;
+    \? ) echo "usage: repostatus [-q] [PATH]"
+  esac
+done
+
+shift $((OPTIND - 1))
+
+if [ "$#" -ne 0 ]; then
+  echo "$#"
+  echo "$@"
+  echo "$1"
+  HERE="$(realpath "$1")"
 fi
 
 SUCCESS_COLOR='\033[32m'
@@ -106,7 +120,9 @@ find . -type d -exec sh -c 'test -e $0/.git' '{}' ';' -print -prune | {
         diff="$(git log "$remote/$merge_ref..$branch")"
         if [ "_$diff" = "_" ]; then
           nb_ok=$((nb_ok + 1))
-          print_repo "$SUCCESS_COLOR" Ok
+          if [ "$QUIET" = 0 ]; then
+            print_repo "$SUCCESS_COLOR" Ok
+          fi
         else
           nb_err=$((nb_err + 1))
           print_repo "$FAIL_COLOR" Failed
