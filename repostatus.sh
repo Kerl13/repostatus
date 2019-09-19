@@ -93,7 +93,7 @@ get_remote () {
 print_message "Repostatus"
 
 cd "$HERE"
-find . -type d -exec sh -c 'test -e $0/.git' '{}' ';' -print -prune | {
+find -L . -type d -exec sh -c 'test -e $0/.git' '{}' ';' -print -prune | {
   nb_ok=0
   nb_warn=0
   nb_err=0
