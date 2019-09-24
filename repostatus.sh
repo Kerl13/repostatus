@@ -10,11 +10,16 @@ set -euC
 HERE="$HOME/git"
 QUIET=0
 
+usage () {
+  echo "usage: repostatus [-q] [PATH]"
+  exit 1
+}
+
 while getopts 'q' opt; do
   case "$opt" in
     q ) QUIET=1
       ;;
-    \? ) echo "usage: repostatus [-q] [PATH]"
+    \? ) usage
   esac
 done
 
