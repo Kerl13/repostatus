@@ -110,7 +110,7 @@ find -L . -type d -exec sh -c 'test -e $0/.git' '{}' ';' -print -prune | {
     if [ "_$status" != "_" ]; then
       # Repository not clean
       nb_err=$((nb_err + 1))
-      print_repo "$FAIL_COLOR" Failed
+      print_repo "$FAIL_COLOR" 
       git status
     else
       # Look for a remote branch
@@ -120,17 +120,17 @@ find -L . -type d -exec sh -c 'test -e $0/.git' '{}' ';' -print -prune | {
       if [ "_$remote" = "_" ] || [ "_$merge_ref" = "_" ]; then
         # Found no remote branch
         nb_warn=$((nb_warn + 1))
-        print_repo "$WARNING_COLOR" "No remote"
+        print_repo "$WARNING_COLOR" "No remote "
       else
         diff="$(git log "$remote/$merge_ref..$branch")"
         if [ "_$diff" = "_" ]; then
           nb_ok=$((nb_ok + 1))
           if [ "$QUIET" = 0 ]; then
-            print_repo "$SUCCESS_COLOR" Ok
+            print_repo "$SUCCESS_COLOR" 
           fi
         else
           nb_err=$((nb_err + 1))
-          print_repo "$FAIL_COLOR" Failed
+          print_repo "$FAIL_COLOR" 
           git status
         fi
       fi
