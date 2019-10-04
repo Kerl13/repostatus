@@ -44,24 +44,24 @@ trim_prefix () {
   echo "${1#$HERE/}"
 }
 
-pad="====================================================================="
+pad="─────────────────────────────────────────────────────────────────────"
 
 
 print_message () {
-  printf '%*.*s' 0 $(((66 - ${#1} - 4)/2)) "$pad"
+  printf '%*.*s' 0 $((3*(66 - ${#1} - 4)/2)) "$pad"
   printf '( %b%s%b )' "$MESSAGE_COLOR" "$1" "$WHITE"
-  printf '%*.*s' 0 $(((66 - ${#1} - 4)/2)) "$pad"
+  printf '%*.*s' 0 $((3*(66 - ${#1} - 4)/2)) "$pad"
   printf '\n'
 }
 
 print_stats () {
-  printf '%*.*s' 0 $(((66 - ${#1} - ${#2} - ${#3} - 16)/2)) "$pad"
+  printf '%*.*s' 0 $((3*(66 - ${#1} - ${#2} - ${#3} - 16)/2)) "$pad"
   printf '( %bDone%b: %b%s%b / %b%s%b / %b%s%b )' \
     "$MESSAGE_COLOR" "$WHITE" \
     "$SUCCESS_COLOR" "$1" "$WHITE" \
     "$WARNING_COLOR" "$2" "$WHITE" \
     "$FAIL_COLOR" "$3" "$WHITE"
-  printf '%*.*s' 0 $(((66 - ${#1} - ${#2} - ${#3} - 16)/2)) "$pad"
+  printf '%*.*s' 0 $((3*(66 - ${#1} - ${#2} - ${#3} - 16)/2)) "$pad"
   printf '\n'
 }
 
@@ -70,9 +70,9 @@ print_repo () {
   # $1 -- color
   # $2 -- message
   reponame="$(trim_prefix "$(pwd)")"
-  printf '==( %b%s%b )' "$REPO_COLOR" "$reponame" "$WHITE"
-  printf '%*.*s' 0 $((66 - ${#reponame} - 6 - ${#2} - 6)) "$pad"
-  printf '( %b%s%b )==' "$1" "$2" "$WHITE"
+  printf '──( %b%s%b )' "$REPO_COLOR" "$reponame" "$WHITE"
+  printf '%*.*s' 0 $((3*(66 - ${#reponame} - 6 - ${#2} - 6))) "$pad"
+  printf '( %b%s%b )──' "$1" "$2" "$WHITE"
   printf '\n'
 }
 
